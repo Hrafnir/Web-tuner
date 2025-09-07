@@ -3,62 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pro Tuner – Frekvensbånd (Bb/Eb/C)</title>
-  <!-- Prevent favicon 404 in console -->
+  <title>Vertical Band Tuner – Bb/Eb/C</title>
   <link rel="icon" href="data:,">
   <style>
-    :root{ --bg:#0f1320; --panel:#151a2b; --accent:#6cf; --ok:#37d67a; --warn:#ffb025; --bad:#ff5a5a; --text:#e8eef9; --muted:#9fb0c7; }
+    :root{--bg:#0f1320;--panel:#151a2b;--accent:#6cf;--ok:#37d67a;--warn:#ffb025;--bad:#ff5a5a;--text:#e8eef9;--muted:#9fb0c7}
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{margin:0;background:radial-gradient(1200px 900px at 60% -10%, #1b2140 0%, #0f1320 60%, #0a0d18 100%);color:var(--text);font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial}
-    header{padding:18px 20px 8px;border-bottom:1px solid #1f2744;background:#0f1320cc;backdrop-filter: blur(6px);position:sticky;top:0;z-index:2}
-    header h1{margin:0;font-size:20px;letter-spacing:.4px}
-    header p{margin:4px 0 0;color:var(--muted);font-size:13px}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .card{background:linear-gradient(180deg,#161b2e 0%, #0f1320 100%);border:1px solid #1f2744;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);margin-bottom:16px}
-    .card .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #1f2744}
-    .card .hd h2{margin:0;font-size:14px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
-    .card .bd{padding:16px}
+    header{padding:14px 14px;border-bottom:1px solid #1f2744;background:#0f1320cc;backdrop-filter: blur(6px);position:sticky;top:0;z-index:10}
+    header h1{margin:0;font-size:18px}
+
+    .wrap{max-width:860px;margin:0 auto;padding:12px}
+    .card{background:linear-gradient(180deg,#161b2e 0%, #0f1320 100%);border:1px solid #1f2744;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);margin-bottom:14px}
+    .card .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #1f2744}
+    .card .hd h2{margin:0;font-size:13px;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+    .card .bd{padding:12px}
 
     button{appearance:none;border:1px solid #273054;background:#0d1222;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;transition:.15s transform,.15s background,.15s border-color;font-weight:600}
-    button:hover{transform:translateY(-1px);border-color:#375}
+    button:hover{transform:translateY(-1px)}
     button.primary{background:linear-gradient(180deg,#1f2b5e,#18224a);border-color:#2c3b78}
     button.danger{border-color:#5a2730}
 
+    /* --- Vertical band --- */
+    .bandWrap{position:relative;height:60vh;min-height:360px;max-height:75vh;border:1px solid #273054;border-radius:14px;overflow:hidden;background:#0d1222}
+    .bandCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .freqBadge{position:absolute;top:8px;left:8px;background:#0f1320;border:1px solid #273054;border-radius:10px;padding:6px 10px;font-family:ui-monospace,Menlo,Consolas,monospace}
+    .noteBadge{position:absolute;top:8px;right:8px;background:#0f1320;border:1px solid #273054;border-radius:10px;padding:6px 10px;font-weight:700}
+    .hitBadge{position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:6px 12px;border-radius:999px;border:1px solid #2d6;display:none;background:#0f1c18}
+
+    /* Make this card full width on mobile and place first */
+    .stack{display:grid;grid-template-columns:1fr;gap:12px}
+
+    /* Settings layout below */
+    .controls{display:grid;grid-template-columns:repeat(3, minmax(120px,1fr));gap:10px}
+    @media (max-width:700px){.controls{grid-template-columns:1fr 1fr}}
     label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
-    select,input[type="range"],input[type="number"]{width:100%;background:#0d1222;color:var(--text);border:1px solid #273054;border-radius:10px;padding:10px 12px;outline:none}
-    .controls{display:grid;grid-template-columns:repeat(6, minmax(120px,1fr));gap:10px}
-    @media (max-width:1100px){.controls{grid-template-columns:repeat(2,1fr)}}
+    select,input[type="range"]{width:100%;background:#0d1222;color:var(--text);border:1px solid #273054;border-radius:10px;padding:10px 12px}
+    .row{display:flex;gap:10px;align-items:center}
 
-    .bandWrap{position:relative;width:100%;height:300px;background:#0d1222;border:1px solid #273054;border-radius:12px;overflow:hidden}
-    .bandCanvas{width:100%;height:100%;display:block}
-    .bandLabel{position:absolute;left:10px;top:10px;font-size:12px;color:var(--muted)}
-    .freqRead{position:absolute;right:12px;top:10px;background:#0f1320;border:1px solid #273054;border-radius:8px;padding:6px 10px;font-family:ui-monospace, Menlo, Consolas, monospace}
-    .redLine{position:absolute;top:0;width:4px;height:100%;background:#ff3b3b;box-shadow:0 0 10px rgba(255,80,80,.55)}
+    /* Anti-jitter numbers */
+    .tabnum{font-variant-numeric:tabular-nums}
 
-    .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:center;margin-top:12px}
-    .bubble{background:#0d1222;border:1px solid #273054;border-radius:12px;padding:12px}
-    .note{font-size:44px;font-weight:800;letter-spacing:1px}
-    .oct{font-size:18px;color:var(--muted)}
-    /* Anti-jitter: fixed width numbers with tabular lining */
-    .cents{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;min-width:220px;display:inline-block;white-space:nowrap}
-    .status{font-size:14px;color:var(--muted)}
-    .bar{position:relative;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--bad),var(--warn),var(--ok),var(--warn),var(--bad));opacity:.9;margin-top:8px}
-    .marker{position:absolute;top:-5px;width:3px;height:24px;background:#e8eef9;border-radius:2px;left:50%}
-    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-    .kbd{font-family:ui-monospace, Menlo, Consolas, monospace;color:#cfe3ff;background:#0d1222;border:1px solid #273054;padding:6px 10px;border-radius:8px;font-size:12px}
-    .small{font-size:12px;color:var(--muted)}
+    /* Only the tuner visible first on mobile */
+    @media (max-width:760px){ header h1{font-size:16px} }
   </style>
 </head>
 <body>
   <header>
-    <h1>Pro Tuner – Frekvensbånd (Bb/Eb/C)</h1>
-    <p>Tydelig båndvisning (log 55–1760 Hz) med rød linje (~1 mm), referansetone og automatisk transponering (tenor m.m.).</p>
+    <h1>Vertical Band Tuner – sax/clarinet m.fl.</h1>
   </header>
 
   <div class="wrap">
-    <section class="card">
+    <!-- TUNER FIRST -->
+    <section class="card" id="tunerCard">
       <div class="hd">
-        <h2>Live Tuning</h2>
+        <h2>Live tuning</h2>
         <div class="row">
           <button id="btnStart" class="primary">Start mikrofon</button>
           <button id="btnStop" class="danger" disabled>Stopp</button>
@@ -66,301 +65,201 @@
       </div>
       <div class="bd">
         <div class="bandWrap">
-          <canvas id="band" class="bandCanvas" aria-label="Frekvensbånd (log)"></canvas>
-          <div class="bandLabel">Frekvensbånd (log): 55–1760 Hz • store streker=C, små=halvtoner • blå=A4</div>
-          <div id="liveFreqBadge" class="freqRead">–</div>
-          <div id="redLine" class="redLine" style="left:-10px"></div>
+          <canvas id="band" class="bandCanvas" aria-label="Vertikalt frekvensbånd"></canvas>
+          <div id="freqBadge" class="freqBadge tabnum">–</div>
+          <div id="noteBadge" class="noteBadge">–</div>
+          <div id="hitBadge" class="hitBadge">IN TUNE</div>
         </div>
+      </div>
+    </section>
 
-        <div class="readout">
-          <div class="bubble">
-            <div class="status">Vises som</div>
-            <div class="row">
-              <select id="displayMode">
-                <option value="concert">Konsertpitch (faktisk lyd)</option>
-                <option value="written">Notert for valgt instrument</option>
-              </select>
-            </div>
-          </div>
-          <div class="bubble">
-            <div class="status">Instrument</div>
+    <!-- SETTINGS BELOW -->
+    <section class="card">
+      <div class="hd"><h2>Innstillinger</h2></div>
+      <div class="bd">
+        <div class="controls">
+          <label>Instrument
             <select id="instrument">
-              <option value="C">C-instrument (piano, gitar, fløyte)</option>
+              <option value="C">C-instrument (piano, fløyte, gitar)</option>
               <option value="Bb_cl">Bb – Klarinett/Trompet</option>
               <option value="Bb_tenor" selected>Bb – Tenorsaksofon</option>
               <option value="Eb_alto">Eb – Altsaksofon</option>
               <option value="Eb_bari">Eb – Baritonsaksofon</option>
               <option value="F_horn">F – Horn</option>
             </select>
-            <div class="small">Tenor Bb: skriftlig C klinger som konsert B♭ (stor sekund ned, oktavforskyvning).</div>
-          </div>
-          <div class="bubble">
-            <div class="status">Kalibrering (A4)</div>
-            <div class="row" style="align-items:center">
-              <input id="a4" type="range" min="430" max="450" step="0.1" value="440" />
-              <span id="a4v" class="kbd">440.0 Hz</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="readout">
-          <div class="bubble">
-            <div class="status">Note</div>
-            <div><span id="note" class="note">--</span><span id="oct" class="oct"></span></div>
-            <div class="small">Konsert: <span id="concertName">–</span> • Notert (<span id="instrName">–</span>): <span id="writtenName">–</span></div>
-          </div>
-          <div class="bubble">
-            <div class="status">Avvik</div>
-            <div><span id="cents" class="cents">–</span></div>
-            <div class="bar"><div id="centMarker" class="marker" style="left:50%"></div></div>
-          </div>
-          <div class="bubble">
-            <div class="status">Frekvens</div>
-            <div class="row" style="justify-content:space-between">
-              <div>
-                <div><span class="muted">Målt:</span> <span id="freq">–</span></div>
-                <div><span class="muted">Mål (nærmeste):</span> <span id="target">–</span></div>
-              </div>
-              <div>
-                <span class="kbd">Tips</span>
-                <span class="small">Hold tonen stabil i 600–1000 ms for beste resultat.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="hd"><h2>Referansetone & Veiledning</h2></div>
-      <div class="bd">
-        <div class="controls" style="margin-bottom:8px">
-          <label>Konsert-note
-            <select id="refNote"></select>
           </label>
-          <label>Oktav
-            <select id="refOct"></select>
-          </label>
-          <label>Bølgeform
-            <select id="wave">
-              <option>triangle</option>
-              <option selected>sine</option>
-              <option>square</option>
-              <option>sawtooth</option>
+          <label>Visning
+            <select id="displayMode">
+              <option value="concert" selected>Konsertpitch</option>
+              <option value="written">Notert (for valgt instrument)</option>
             </select>
           </label>
-          <label>Volum
-            <input id="vol" type="range" min="0" max="1" step="0.01" value="0.15" />
-          </label>
-          <label>Drone
+          <label>A4 kalibrering
             <div class="row">
+              <input id="a4" type="range" min="430" max="450" step="0.1" value="440" />
+              <span id="a4v" class="tabnum">440.0 Hz</span>
+            </div>
+          </label>
+          <label>Referansetone (konsert)
+            <div class="row">
+              <select id="refNote"></select>
+              <select id="refOct"></select>
               <button id="btnPlay" class="primary">Spill</button>
               <button id="btnStopTone" class="danger" disabled>Stopp</button>
             </div>
-          </label>
-          <label>Hva skal jeg spille?
-            <div id="whatToPlay" class="kbd">–</div>
+            <small id="whatToPlay" style="display:block;margin-top:6px;color:var(--muted)">–</small>
           </label>
         </div>
-        <div class="small">Velg en <b>konsert-note</b>. Boksen forteller hvilken <b>notert</b> tone du skal spille på valgt instrument.</div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="hd"><h2>Hurtighjelp</h2></div>
-      <div class="bd">
-        <ul>
-          <li>Tenorsaksofon (Bb): Skrevet <b>C</b> klinger som <b>B♭</b>. For å matche <b>konsert C</b>, spill <b>D</b> (skrevet) på tenor.</li>
-          <li>Altsaksofon (Eb): Skrevet <b>C</b> klinger som <b>E♭</b>. For konsert C, spill <b>A</b> skrevet.</li>
-          <li>Appen viser både <em>konsert</em> og <em>notert</em> navn samtidig, pluss avvik i cent.</li>
-        </ul>
       </div>
     </section>
   </div>
 
 <script>
 (function(){
-  // ===== Utilities =====
-  const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-  const FLAT_NAMES = {"C#":"D♭","D#":"E♭","F#":"G♭","G#":"A♭","A#":"B♭"};
-  const nameWithFlats = (name)=> FLAT_NAMES[name] || name;
+  // ---------- Music utils ----------
+  const NOTE_NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const FLAT={"C#":"D♭","D#":"E♭","F#":"G♭","G#":"A♭","A#":"B♭"};
+  const flat=(n)=>FLAT[n]||n;
+  const midiToFreq=(m,A4)=>A4*Math.pow(2,(m-69)/12);
+  const midiToName=(m)=>{const n=(m%12+12)%12;const oct=Math.floor(m/12)-1;return {name:NOTE_NAMES[n],oct}};
+  const INSTR={C:{label:"C",off:0},Bb_cl:{label:"Bb_cl",off:-2},Bb_tenor:{label:"Bb_tenor",off:-14},Eb_alto:{label:"Eb_alto",off:-9},Eb_bari:{label:"Eb_bari",off:-21},F_horn:{label:"F_horn",off:-7}};
 
-  function midiToFreq(m, A4){ return A4 * Math.pow(2, (m-69)/12); }
-  function midiToName(m){ const n=(m%12+12)%12; const oct=Math.floor(m/12)-1; return {name:NOTE_NAMES[n], oct}; }
+  // ---------- DOM ----------
+  const el=(id)=>document.getElementById(id);
+  const band=el('band'), freqBadge=el('freqBadge'), noteBadge=el('noteBadge'), hitBadge=el('hitBadge');
+  const instrumentSel=el('instrument'), displayMode=el('displayMode');
+  const a4=el('a4'), a4v=el('a4v');
+  const btnStart=el('btnStart'), btnStop=el('btnStop');
+  const refNoteSel=el('refNote'), refOctSel=el('refOct');
+  const btnPlay=el('btnPlay'), btnStopTone=el('btnStopTone');
+  const whatToPlay=el('whatToPlay');
 
-  const INSTRUMENTS = {
-    C:{label:"C-instrument", writtenToConcert:+0},
-    Bb_cl:{label:"Bb Klarinett/Trompet", writtenToConcert:-2},
-    Bb_tenor:{label:"Bb Tenorsaksofon", writtenToConcert:-14},
-    Eb_alto:{label:"Eb Altsaksofon", writtenToConcert:-9},
-    Eb_bari:{label:"Eb Baritonsaksofon", writtenToConcert:-21},
-    F_horn:{label:"F Horn", writtenToConcert:-7}
-  };
-  function concertToWrittenMidi(concertMidi, instKey){ const off = INSTRUMENTS[instKey].writtenToConcert; return concertMidi - off; }
+  // build reference menus
+  NOTE_NAMES.map(flat).forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;refNoteSel.appendChild(o);});
+  for(let o=1;o<=7;o++){const opt=document.createElement('option');opt.value=o;opt.textContent=o;if(o===4)opt.selected=true;refOctSel.appendChild(opt);}  
 
-  // ===== DOM =====
-  const el = (id)=>document.getElementById(id);
-  const band = el('band');
-  const redLine = el('redLine');
-  const liveFreqBadge = el('liveFreqBadge');
-  const freqEl = el('freq');
-  const targetEl = el('target');
-  const centsEl = el('cents');
-  const marker = el('centMarker');
-  const noteEl = el('note');
-  const octEl = el('oct');
-  const concertNameEl = el('concertName');
-  const writtenNameEl = el('writtenName');
-  const instrNameEl = el('instrName');
+  // ---------- Canvas (vertical band) ----------
+  const ctx=band.getContext('2d');
+  function resize(){
+    const dpr=window.devicePixelRatio||1;const r=band.getBoundingClientRect();band.width=r.width*dpr;band.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);drawGrid();}
+  window.addEventListener('resize',resize); resize();
 
-  const a4 = el('a4'); const a4v = el('a4v');
-  const instrumentSel = el('instrument');
-  const displayMode = el('displayMode');
-  const btnStart = el('btnStart');
-  const btnStop = el('btnStop');
+  // draw grid centered on a given centerMidi (nearest semitone)
+  function drawGrid(centerMidi){
+    const A4val=parseFloat(a4.value);
+    const r=band.getBoundingClientRect(); const w=r.width, h=r.height; ctx.clearRect(0,0,w,h);
+    // background
+    const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,'#0f1320'); g.addColorStop(1,'#0b0f1d'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
 
-  const refNote = el('refNote');
-  const refOct = el('refOct');
-  const waveSel = el('wave');
-  const vol = el('vol');
-  const btnPlay = el('btnPlay');
-  const btnStopTone = el('btnStopTone');
-  const whatToPlay = el('whatToPlay');
+    // Vertical band becomes NOTE scale vertically: we show -1 to +1 semitone around center, with padding
+    // Map cents to Y position: -100c (one semitone up) -> 0 (top), 0c -> h/2, +100c -> h (bottom)
+    function yFromCents(c){ const t=(c+100)/200; return t*h; }
 
-  // Build reference selectors
-  const NOTES = NOTE_NAMES.map(nameWithFlats);
-  NOTES.forEach((n,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=n; refNote.appendChild(o); });
-  for(let o=1;o<=7;o++){ const opt=document.createElement('option'); opt.value=o; opt.textContent=o; if(o===4) opt.selected=true; refOct.appendChild(opt); }
+    // draw main lines for semitone up/down
+    ctx.strokeStyle='#2c3760'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0, yFromCents(0)); ctx.lineTo(w, yFromCents(0)); ctx.stroke(); // center note
+    ctx.strokeStyle='#1d2747'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(0, yFromCents(-100)); ctx.lineTo(w, yFromCents(-100)); ctx.stroke(); // +1 semitone (top)
+    ctx.beginPath(); ctx.moveTo(0, yFromCents(100)); ctx.lineTo(w, yFromCents(100)); ctx.stroke(); // -1 semitone (bottom)
 
-  instrNameEl.textContent = INSTRUMENTS[instrumentSel.value].label;
-
-  // ===== Band canvas =====
-  const MIN_F = 55;   // A1 (declare BEFORE resize & draw calls)
-  const MAX_F = 1760; // A6
-  let bandCtx = band.getContext('2d');
-
-  function xFromFreq(f){
-    const clamped = Math.max(MIN_F, Math.min(MAX_F, f));
-    const t = (Math.log2(clamped) - Math.log2(MIN_F)) / (Math.log2(MAX_F) - Math.log2(MIN_F));
-    const w = band.getBoundingClientRect().width;
-    return t * w;
-  }
-  function drawBandGrid(A4){
-    const ctx = bandCtx; const rect = band.getBoundingClientRect(); const w=rect.width, h=rect.height;
-    ctx.clearRect(0,0,w,h);
-    const grad = ctx.createLinearGradient(0,0,0,h); grad.addColorStop(0,'#0f1320'); grad.addColorStop(1,'#0b0f1d');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
-    const startMidi = Math.max(21, Math.floor(69 + 12*Math.log2(MIN_F/A4)) - 12);
-    const endMidi   = Math.min(108, Math.ceil(69 + 12*Math.log2(MAX_F/A4)) + 12);
-    for(let m=startMidi; m<=endMidi; m++){
-      const f = A4 * Math.pow(2,(m-69)/12); const x = xFromFreq(f); const isC = (m % 12) === 0;
-      ctx.beginPath(); ctx.strokeStyle = isC ? '#2c3760' : '#1d2747'; ctx.lineWidth = isC ? 2 : 1;
-      ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
-      if(isC){ const {name,oct}=midiToName(m); ctx.fillStyle='#9fb0c7'; ctx.font='12px system-ui'; ctx.fillText(`${name}${oct}` ,x+4,16); }
+    // labels top/mid/bottom
+    if(typeof centerMidi==='number'){
+      const top = centerMidi+1, mid=centerMidi, bot=centerMidi-1;
+      const topN=midiToName(top), midN=midiToName(mid), botN=midiToName(bot);
+      ctx.fillStyle='#9fb0c7'; ctx.font='13px system-ui';
+      ctx.fillText(flat(topN.name)+topN.oct, 8, 16);
+      ctx.fillText(flat(midN.name)+midN.oct, 8, h/2 - 6);
+      ctx.fillText(flat(botN.name)+botN.oct, 8, h - 8);
     }
-    const ax = xFromFreq(A4); ctx.beginPath(); ctx.strokeStyle = '#6cf'; ctx.lineWidth=2; ctx.moveTo(ax,0); ctx.lineTo(ax,h); ctx.stroke();
-    ctx.fillStyle='#cfe3ff'; ctx.font='12px system-ui'; ctx.fillText(`A4 ${A4.toFixed(1)}Hz`, ax+4, h-8);
-  }
-  function resizeBand(){
-    const dpr = window.devicePixelRatio || 1;
-    const rect = band.getBoundingClientRect();
-    band.width = Math.round(rect.width * dpr);
-    band.height = Math.round(rect.height * dpr);
-    bandCtx.setTransform(dpr,0,0,dpr,0,0);
-    drawBandGrid(parseFloat(a4.value));
-  }
-  window.addEventListener('resize', resizeBand);
-  resizeBand();
 
-  // ===== Audio: microphone + pitch detection =====
-  let audioCtx, analyser, micSrc, rafId=null;
-  const bufSize = 2048; const buf = new Float32Array(bufSize);
-  function autoCorrelateTimeDomain(buffer, sampleRate){
-    const SIZE=buffer.length; let rms=0; for(let i=0;i<SIZE;i++){ const v=buffer[i]; rms+=v*v; }
-    rms=Math.sqrt(rms/SIZE); if(rms<0.008) return {freq:null, conf:0};
-    let r1=0,r2=SIZE-1,thresh=0.2; for(let i=0;i<SIZE/2;i++){ if(Math.abs(buffer[i])<thresh){ r1=i; break; } }
-    for(let i=1;i<SIZE/2;i++){ if(Math.abs(buffer[SIZE-i])<thresh){ r2=SIZE-i; break; } }
-    buffer=buffer.slice(r1,r2); const newSize=buffer.length; const c=new Array(newSize).fill(0);
-    for(let i=0;i<newSize;i++){ for(let j=0;j<newSize-i;j++) c[i]+=buffer[j]*buffer[j+i]; }
-    let d=0; while(d<newSize && c[d]>c[d+1]) d++; let maxval=-1, maxpos=-1;
-    for(let i=d;i<newSize;i++){ if(c[i]>maxval){ maxval=c[i]; maxpos=i; } }
-    if(maxpos<=0) return {freq:null, conf:0};
-    const x1=c[maxpos-1], x2=c[maxpos], x3=c[maxpos+1];
-    const better = maxpos + (x3-x1)/(2*(2*x2-x1-x3));
-    const freq = sampleRate/better; const conf = maxval/c[0];
-    if(!isFinite(freq)||freq<30||freq>2000) return {freq:null, conf:0};
-    return {freq, conf:rms*conf};
+    // A4 marker if visible
+    const a4m=69; // MIDI for A4
+    if(Math.abs((centerMidi??a4m)-a4m)<=1){
+      const y=yFromCents((a4m-(centerMidi??a4m))*100); ctx.strokeStyle='#6cf'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      ctx.fillStyle='#cfe3ff'; ctx.font='12px system-ui'; ctx.fillText(`A4 ${A4val.toFixed(1)}Hz`, w-120, y-6);
+    }
   }
 
-  function startMic(){
-    if(audioCtx) return;
-    navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
-      .then(stream=>{
-        audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-        micSrc = audioCtx.createMediaStreamSource(stream);
-        analyser = audioCtx.createAnalyser(); analyser.fftSize = 2048;
-        micSrc.connect(analyser);
-        loop();
-        btnStart.disabled=true; btnStop.disabled=false;
-      }).catch(err=>{ alert('Kunne ikke få tilgang til mikrofonen: '+err.message); });
-  }
-  function stopMic(){ if(rafId) cancelAnimationFrame(rafId), rafId=null; if(micSrc&&micSrc.mediaStream){ micSrc.mediaStream.getTracks().forEach(t=>t.stop()); } if(audioCtx){ audioCtx.close(); }
-    audioCtx=analyser=micSrc=null; btnStart.disabled=false; btnStop.disabled=true; liveFreqBadge.textContent='–'; redLine.style.left='-10px'; }
+  // position the RED line for current frequency relative to centerMidi
+  function drawRed(freq, centerMidi){
+    const r=band.getBoundingClientRect(); const w=r.width, h=r.height;
+    const A4val=parseFloat(a4.value);
+    const nearestMidi=Math.round(69+12*Math.log2(freq/A4val));
+    const targetFreq=midiToFreq(nearestMidi,A4val);
+    const cents=1200*Math.log2(freq/targetFreq); // + is sharp (below center line on our mapping)
+    const y = (cents+100)/200 * h; // map to [0,h]
 
-  function loop(){ if(!analyser) return; analyser.getFloatTimeDomainData(buf); const {freq,conf}=autoCorrelateTimeDomain(buf, audioCtx.sampleRate); updateUIWithFreq(freq, conf); rafId=requestAnimationFrame(loop); }
+    // red line
+    ctx.fillStyle='#ff3b3b'; ctx.fillRect(w*0.48, y-2, w*0.04, 4); // ~1mm thick horizontal block
 
-  // ===== Display & logic =====
-  function centsDiff(f,t){ return 1200*Math.log2(f/t); }
+    // glow on perfect hit
+    const abs=Math.abs(cents);
+    if(abs<3){ // perfect
+      hitBadge.style.display='block';
+      // green highlight the center line
+      ctx.fillStyle='rgba(55,214,122,0.15)'; ctx.fillRect(0, h/2-10, w, 20);
+    } else if(abs<10){
+      hitBadge.style.display='none';
+      // near: subtle highlight
+      ctx.fillStyle='rgba(255,176,37,0.08)'; ctx.fillRect(0, y-10, w, 20);
+    } else {
+      hitBadge.style.display='none';
+    }
 
-  function updateUIWithFreq(freq, conf){
-    const A4 = parseFloat(a4.value); a4v.textContent=A4.toFixed(1)+' Hz';
-    drawBandGrid(A4);
-
-    if(!freq){ freqEl.textContent='–'; targetEl.textContent='–'; centsEl.textContent='–'; marker.style.left='50%'; liveFreqBadge.textContent='–'; redLine.style.left='-10px'; return; }
-
-    const midi = Math.round(69 + 12*Math.log2(freq/A4));
-    const target = midiToFreq(midi, A4); const cents = centsDiff(freq, target);
-
-    freqEl.textContent = freq.toFixed(1)+' Hz'; targetEl.textContent = target.toFixed(1)+' Hz';
-
-    const concert = midiToName(midi); const concertLabel = nameWithFlats(concert.name)+concert.oct;
-    const instKey = instrumentSel.value; const writtenMidi = concertToWrittenMidi(midi, instKey);
-    const written = midiToName(writtenMidi); const writtenLabel = nameWithFlats(written.name)+written.oct;
-
-    const showWritten = (displayMode.value==='written'); const mainLabel = showWritten?writtenLabel:concertLabel;
-    noteEl.textContent = mainLabel.replace(/-?\d+$/,'').trim();
-    octEl.textContent = mainLabel.match(/-?\d+$/)?' '+mainLabel.match(/-?\d+$/)[0]:'';
-    concertNameEl.textContent = concertLabel; writtenNameEl.textContent = writtenLabel;
-
-    const cAbs = Math.abs(cents); const within = cAbs<5?'OK':(cAbs<15?'Nær':(cAbs<30?'Utenfor':'Langt unna'));
-    centsEl.textContent = (cents>0?'+':'')+cents.toFixed(1)+' cent ('+within+')';
-    const clamped = Math.max(-50, Math.min(50, cents)); marker.style.left = (50+clamped)+'%';
-
-    const x = xFromFreq(freq); redLine.style.left = `${x-2}px`; liveFreqBadge.textContent = `${freq.toFixed(1)} Hz`;
+    // badges
+    freqBadge.textContent = `${freq.toFixed(1)} Hz`;
   }
 
-  // ===== Reference tone =====
-  let refCtx=null, osc=null, gain=null;
-  function startRef(){
-    const A4 = parseFloat(a4.value); const n=parseInt(refNote.value,10); const o=parseInt(refOct.value,10);
-    const concertMidi = (o+1)*12 + n; const freq = midiToFreq(concertMidi, A4);
-    if(!refCtx) refCtx = new (window.AudioContext||window.webkitAudioContext)();
-    osc = refCtx.createOscillator(); gain = refCtx.createGain(); osc.type=waveSel.value; osc.frequency.value=freq; gain.gain.value=parseFloat(vol.value);
-    osc.connect(gain).connect(refCtx.destination); osc.start(); btnPlay.disabled=true; btnStopTone.disabled=false;
-    const instKey = instrumentSel.value; const writtenMidi = concertToWrittenMidi(concertMidi, instKey); const wn=midiToName(writtenMidi);
-    whatToPlay.textContent = `Spill ${nameWithFlats(wn.name)}${wn.oct} på ${INSTRUMENTS[instKey].label}`;
+  // ---------- Audio (mic + autocorrelation pitch) ----------
+  let audioCtx, analyser, micSrc, rafId=null; const buf = new Float32Array(2048);
+  function autoCorrelate(buffer, sampleRate){
+    const SIZE=buffer.length; let rms=0; for(let i=0;i<SIZE;i++){const v=buffer[i]; rms+=v*v;} rms=Math.sqrt(rms/SIZE); if(rms<0.008) return {freq:null};
+    let r1=0,r2=SIZE-1,th=0.2; for(let i=0;i<SIZE/2;i++){ if(Math.abs(buffer[i])<th){ r1=i; break; } } for(let i=1;i<SIZE/2;i++){ if(Math.abs(buffer[SIZE-i])<th){ r2=SIZE-i; break; } }
+    buffer=buffer.slice(r1,r2); const N=buffer.length; const c=new Array(N).fill(0);
+    for(let i=0;i<N;i++){ for(let j=0;j<N-i;j++){ c[i]+=buffer[j]*buffer[j+i]; } }
+    let d=0; while(d<N-1 && c[d]>c[d+1]) d++; let max=-1,idx=-1; for(let i=d;i<N;i++){ if(c[i]>max){max=c[i]; idx=i;} }
+    if(idx<=0) return {freq:null}; const x1=c[idx-1],x2=c[idx],x3=c[idx+1]; const better=idx+(x3-x1)/(2*(2*x2-x1-x3));
+    const f=sampleRate/better; if(!isFinite(f)||f<30||f>2000) return {freq:null}; return {freq:f};
   }
-  function stopRef(){ if(osc){ try{osc.stop();}catch{} } osc=null; if(btnPlay) btnPlay.disabled=false; if(btnStopTone) btnStopTone.disabled=true; }
+  function startMic(){ if(audioCtx) return; navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}).then(stream=>{
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)(); micSrc=audioCtx.createMediaStreamSource(stream); analyser=audioCtx.createAnalyser(); analyser.fftSize=2048; micSrc.connect(analyser);
+      btnStart.disabled=true; btnStop.disabled=false; loop();
+    }).catch(e=>alert('Mikrofontilgang feilet: '+e.message)); }
+  function stopMic(){ if(rafId) cancelAnimationFrame(rafId); if(micSrc&&micSrc.mediaStream){ micSrc.mediaStream.getTracks().forEach(t=>t.stop()); } if(audioCtx){ audioCtx.close(); }
+    rafId=null; audioCtx=analyser=micSrc=null; btnStart.disabled=false; btnStop.disabled=true; }
+  function loop(){ if(!analyser) return; analyser.getFloatTimeDomainData(buf); const {freq}=autoCorrelate(buf, audioCtx.sampleRate); update(freq); rafId=requestAnimationFrame(loop); }
 
-  // Events
-  btnStart.addEventListener('click', startMic);
-  btnStop.addEventListener('click', stopMic);
-  [instrumentSel, displayMode].forEach(s=>s.addEventListener('change', ()=>{ instrNameEl.textContent = INSTRUMENTS[instrumentSel.value].label; }));
-  a4.addEventListener('input', ()=>{ a4v.textContent = parseFloat(a4.value).toFixed(1)+' Hz'; drawBandGrid(parseFloat(a4.value)); });
-  btnPlay.addEventListener('click', startRef);
-  btnStopTone.addEventListener('click', stopRef);
-  vol.addEventListener('input', ()=>{ if(gain) gain.gain.value=parseFloat(vol.value); });
-  waveSel.addEventListener('change', ()=>{ if(osc) osc.type = waveSel.value; });
+  // ---------- Update & transposition ----------
+  function update(freq){
+    const A4val=parseFloat(a4.value); a4v.textContent=A4val.toFixed(1)+' Hz';
+    if(!freq){ noteBadge.textContent='–'; drawGrid(); freqBadge.textContent='–'; hitBadge.style.display='none'; return; }
+
+    // center around the nearest semitone in CONCERT pitch
+    const nearestMidi=Math.round(69+12*Math.log2(freq/A4val));
+    drawGrid(nearestMidi);
+
+    // label choice (concert vs written)
+    const instKey=instrumentSel.value; const showWritten=(displayMode.value==='written');
+    const labelMidi = showWritten ? (nearestMidi - INSTR[instKey].off) : nearestMidi; // invert concert=written+off ⇒ written=concert-off
+    const nm=midiToName(labelMidi);
+    noteBadge.textContent = `${flat(nm.name)}${nm.oct}` + (showWritten?' (notert)':'');
+
+    drawRed(freq, nearestMidi);
+  }
+
+  // ---------- Reference tone ----------
+  let refCtx=null,osc=null,gain=null;
+  function playRef(){
+    const A4val=parseFloat(a4.value); const n=parseInt(refNoteSel.value,10); const o=parseInt(refOctSel.value,10); const midi=(o+1)*12+n; const f=midiToFreq(midi,A4val);
+    if(!refCtx) refCtx=new (window.AudioContext||window.webkitAudioContext)(); osc=refCtx.createOscillator(); gain=refCtx.createGain(); osc.type='sine'; osc.frequency.value=f; gain.gain.value=0.15; osc.connect(gain).connect(refCtx.destination); osc.start(); btnPlay.disabled=true; btnStopTone.disabled=false;
+    const instKey=instrumentSel.value; const wMidi=midi - INSTR[instKey].off; const wn=midiToName(wMidi); whatToPlay.textContent=`Spill ${flat(wn.name)}${wn.oct} på ${instKey.replace('_',' ')}`;
+  }
+  function stopRef(){ if(osc){try{osc.stop();}catch{}} osc=null; btnPlay.disabled=false; btnStopTone.disabled=true; }
+
+  // ---------- Events ----------
+  btnStart.addEventListener('click', startMic); btnStop.addEventListener('click', stopMic);
+  a4.addEventListener('input', ()=>{ a4v.textContent=parseFloat(a4.value).toFixed(1)+' Hz'; drawGrid(); });
+  btnPlay.addEventListener('click', playRef); btnStopTone.addEventListener('click', stopRef);
   window.addEventListener('pagehide', ()=>{ stopRef(); stopMic(); });
 })();
 </script>
