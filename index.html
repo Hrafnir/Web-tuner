@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pro Tuner – Frekvensbånd (Bb/Eb/C)</title>
+  <!-- Prevent favicon 404 in console -->
+  <link rel="icon" href="data:,">
   <style>
     :root{ --bg:#0f1320; --panel:#151a2b; --accent:#6cf; --ok:#37d67a; --warn:#ffb025; --bad:#ff5a5a; --text:#e8eef9; --muted:#9fb0c7; }
     *{box-sizing:border-box}
@@ -37,7 +39,8 @@
     .bubble{background:#0d1222;border:1px solid #273054;border-radius:12px;padding:12px}
     .note{font-size:44px;font-weight:800;letter-spacing:1px}
     .oct{font-size:18px;color:var(--muted)}
-    .cents{font-size:28px;font-weight:700}
+    /* Anti-jitter: fixed width numbers with tabular lining */
+    .cents{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;min-width:220px;display:inline-block;white-space:nowrap}
     .status{font-size:14px;color:var(--muted)}
     .bar{position:relative;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--bad),var(--warn),var(--ok),var(--warn),var(--bad));opacity:.9;margin-top:8px}
     .marker{position:absolute;top:-5px;width:3px;height:24px;background:#e8eef9;border-radius:2px;left:50%}
@@ -49,7 +52,7 @@
 <body>
   <header>
     <h1>Pro Tuner – Frekvensbånd (Bb/Eb/C)</h1>
-    <p>Robust pitch-deteksjon, tydelig båndvisning med rød linje (~1mm), referansetone og automatisk transponering for tenorsaksofon m.fl.</p>
+    <p>Tydelig båndvisning (log 55–1760 Hz) med rød linje (~1 mm), referansetone og automatisk transponering (tenor m.m.).</p>
   </header>
 
   <div class="wrap">
@@ -64,7 +67,7 @@
       <div class="bd">
         <div class="bandWrap">
           <canvas id="band" class="bandCanvas" aria-label="Frekvensbånd (log)"></canvas>
-          <div class="bandLabel">Frekvensbånd (log): 55–1760 Hz • store streker=C, små=halvtoner • blå: A4</div>
+          <div class="bandLabel">Frekvensbånd (log): 55–1760 Hz • store streker=C, små=halvtoner • blå=A4</div>
           <div id="liveFreqBadge" class="freqRead">–</div>
           <div id="redLine" class="redLine" style="left:-10px"></div>
         </div>
@@ -108,7 +111,7 @@
           </div>
           <div class="bubble">
             <div class="status">Avvik</div>
-            <div id="cents" class="cents">–</div>
+            <div><span id="cents" class="cents">–</span></div>
             <div class="bar"><div id="centMarker" class="marker" style="left:50%"></div></div>
           </div>
           <div class="bubble">
@@ -169,7 +172,7 @@
         <ul>
           <li>Tenorsaksofon (Bb): Skrevet <b>C</b> klinger som <b>B♭</b>. For å matche <b>konsert C</b>, spill <b>D</b> (skrevet) på tenor.</li>
           <li>Altsaksofon (Eb): Skrevet <b>C</b> klinger som <b>E♭</b>. For konsert C, spill <b>A</b> skrevet.</li>
-          <li>Appen viser både <em>konsert</em> og <em>notert</em> navn samtidig, plus avvik i cent.</li>
+          <li>Appen viser både <em>konsert</em> og <em>notert</em> navn samtidig, pluss avvik i cent.</li>
         </ul>
       </div>
     </section>
@@ -193,9 +196,7 @@
     Eb_bari:{label:"Eb Baritonsaksofon", writtenToConcert:-21},
     F_horn:{label:"F Horn", writtenToConcert:-7}
   };
-  function concertToWrittenMidi(concertMidi, instKey){
-    const off = INSTRUMENTS[instKey].writtenToConcert; return concertMidi - off;
-  }
+  function concertToWrittenMidi(concertMidi, instKey){ const off = INSTRUMENTS[instKey].writtenToConcert; return concertMidi - off; }
 
   // ===== DOM =====
   const el = (id)=>document.getElementById(id);
@@ -234,7 +235,32 @@
   instrNameEl.textContent = INSTRUMENTS[instrumentSel.value].label;
 
   // ===== Band canvas =====
+  const MIN_F = 55;   // A1 (declare BEFORE resize & draw calls)
+  const MAX_F = 1760; // A6
   let bandCtx = band.getContext('2d');
+
+  function xFromFreq(f){
+    const clamped = Math.max(MIN_F, Math.min(MAX_F, f));
+    const t = (Math.log2(clamped) - Math.log2(MIN_F)) / (Math.log2(MAX_F) - Math.log2(MIN_F));
+    const w = band.getBoundingClientRect().width;
+    return t * w;
+  }
+  function drawBandGrid(A4){
+    const ctx = bandCtx; const rect = band.getBoundingClientRect(); const w=rect.width, h=rect.height;
+    ctx.clearRect(0,0,w,h);
+    const grad = ctx.createLinearGradient(0,0,0,h); grad.addColorStop(0,'#0f1320'); grad.addColorStop(1,'#0b0f1d');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    const startMidi = Math.max(21, Math.floor(69 + 12*Math.log2(MIN_F/A4)) - 12);
+    const endMidi   = Math.min(108, Math.ceil(69 + 12*Math.log2(MAX_F/A4)) + 12);
+    for(let m=startMidi; m<=endMidi; m++){
+      const f = A4 * Math.pow(2,(m-69)/12); const x = xFromFreq(f); const isC = (m % 12) === 0;
+      ctx.beginPath(); ctx.strokeStyle = isC ? '#2c3760' : '#1d2747'; ctx.lineWidth = isC ? 2 : 1;
+      ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+      if(isC){ const {name,oct}=midiToName(m); ctx.fillStyle='#9fb0c7'; ctx.font='12px system-ui'; ctx.fillText(`${name}${oct}` ,x+4,16); }
+    }
+    const ax = xFromFreq(A4); ctx.beginPath(); ctx.strokeStyle = '#6cf'; ctx.lineWidth=2; ctx.moveTo(ax,0); ctx.lineTo(ax,h); ctx.stroke();
+    ctx.fillStyle='#cfe3ff'; ctx.font='12px system-ui'; ctx.fillText(`A4 ${A4.toFixed(1)}Hz`, ax+4, h-8);
+  }
   function resizeBand(){
     const dpr = window.devicePixelRatio || 1;
     const rect = band.getBoundingClientRect();
@@ -245,38 +271,6 @@
   }
   window.addEventListener('resize', resizeBand);
   resizeBand();
-
-  const MIN_F = 55;   // A1
-  const MAX_F = 1760; // A6
-  function xFromFreq(f){
-    const clamped = Math.max(MIN_F, Math.min(MAX_F, f));
-    const t = (Math.log2(clamped) - Math.log2(MIN_F)) / (Math.log2(MAX_F) - Math.log2(MIN_F));
-    const w = band.getBoundingClientRect().width;
-    return t * w;
-  }
-  function drawBandGrid(A4){
-    const ctx = bandCtx; const rect = band.getBoundingClientRect(); const w=rect.width, h=rect.height;
-    ctx.clearRect(0,0,w,h);
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,'#0f1320'); grad.addColorStop(1,'#0b0f1d');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
-
-    // semitone grid
-    const startMidi = Math.max(21, Math.floor(69 + 12*Math.log2(MIN_F/A4)) - 12);
-    const endMidi   = Math.min(108, Math.ceil(69 + 12*Math.log2(MAX_F/A4)) + 12);
-    for(let m=startMidi; m<=endMidi; m++){
-      const f = midiToFreq(m, A4);
-      const x = xFromFreq(f);
-      const isC = (m % 12) === 0;
-      ctx.beginPath(); ctx.strokeStyle = isC ? '#2c3760' : '#1d2747'; ctx.lineWidth = isC ? 2 : 1;
-      ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
-      if(isC){ const {name,oct}=midiToName(m); ctx.fillStyle='#9fb0c7'; ctx.font='12px system-ui'; ctx.fillText(`${name}${oct}` ,x+4,16); }
-    }
-    // A4 line
-    const ax = xFromFreq(A4);
-    ctx.beginPath(); ctx.strokeStyle = '#6cf'; ctx.lineWidth=2; ctx.moveTo(ax,0); ctx.lineTo(ax,h); ctx.stroke();
-    ctx.fillStyle='#cfe3ff'; ctx.font='12px system-ui'; ctx.fillText(`A4 ${A4.toFixed(1)}Hz`, ax+4, h-8);
-  }
 
   // ===== Audio: microphone + pitch detection =====
   let audioCtx, analyser, micSrc, rafId=null;
